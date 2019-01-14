@@ -3,8 +3,9 @@ title: "Predicting Endosporulation Among Expanding Firmicutes Phylogeny"
 author: "Jordan Bird"
 date: "December 13, 2018"
 output:
-  pdf_document: default
-  html_document: default
+    pdf_document:
+        includes:
+            in_header: header.tex 
 ---
 
 ## Setup Libraries
@@ -19,17 +20,19 @@ library("openxlsx")
 
 ## Download BLAST results and metadata
 
-```{r}
+```{r, results="hide"}
 REF_HITS <- read.table("../data/WW_REFERENCE_BLAST_OUT.txt", header = F, sep="\t")
 REF_META <- read.xlsx(xlsxFile = "../data/WWRefence_Metadata.xlsx", sheet = 1)
 UBA_HITS_DATA <- read.xlsx("../data/tyson_genome_list_1201_firms.xlsx")
-UBA_HITS <- read.table("../data/B_subtilis_spo_157_gene_in_PARKS_FIRMICUTES.txt", header = F, sep="\t")
+UBA_HITS <- read.table("../data/B_subtilis_spo_157_gene_in_PARKS_FIRMICUTES.txt",
+                       header = F, sep="\t")
 ```
 
 ## Combine Data
 
-```{r}
-colnames(REF_HITS) <- c("qseqid","sseqid","pident","length","qlen","slen","mismatch","gapopen","qstart","qend","sstart","send","qcov","evalue","bitscore")
+```{r, results="hide"}
+colnames(REF_HITS) <- c("qseqid","sseqid","pident","length","qlen","slen","mismatch",
+                        "gapopen","qstart","qend","sstart","send","qcov","evalue","bitscore")
 REF_HITS <- unique(REF_HITS)
 REF_HITS <- REF_HITS[REF_HITS$qcov >= 80,]
 REF_HITS <- REF_HITS[REF_HITS$bitscore >= 80,]
@@ -37,7 +40,9 @@ REF_HITS <- REF_HITS[order(REF_HITS$bitscore, decreasing = T),]
 REF_HITS <- REF_HITS[!duplicated(REF_HITS$sseqid),]
 
 REF_HITS <- REF_HITS[order(REF_HITS$bitscore, decreasing = T),]
-REF_GENOMES <- strsplit(as.vector(unlist(strsplit(as.vector(REF_HITS$sseqid), "\\|"))[grep("_", unlist(strsplit(as.vector(REF_HITS$sseqid), "\\|")))]),"_")
+REF_GENOMES <- strsplit(as.vector(unlist(strsplit(as.vector(REF_HITS$sseqid),
+                                                  "\\|"))[grep("_", unlist(strsplit(as.vector(REF_HITS$sseqid),
+                                                                                    "\\|")))]),"_")
 Nuccore_ID = ""
 for(i in 1:length(REF_GENOMES)){
   if(REF_GENOMES[[i]][1] == "NC" | REF_GENOMES[[i]][1] == "NZ"){
@@ -73,11 +78,16 @@ for(i in 1:length(REF_GENOMES)){
 }
 REF_HITS$RefSeq_ID <- RefSeq_ID
 
-gene_names <- unlist(strsplit(as.vector(REF_HITS$qseqid), "\\|"))[grep("_", unlist(strsplit(as.vector(REF_HITS$qseqid), "\\|")))]
+gene_names <- unlist(strsplit(as.vector(REF_HITS$qseqid),
+"\\|"))[grep("_",
+unlist(strsplit(as.vector(REF_HITS$qseqid), "\\|")))]
 gene_names_spl <- strsplit(gene_names, "_")
 unlist(strsplit(gene_names, "_"))
 is.odd <- function(x) x %% 2 != 0
-gene_names <- unlist(strsplit(gene_names, "_"))[seq(from=1, to=length(unlist(strsplit(gene_names, "_"))))[is.odd(seq(from=1, to=length(unlist(strsplit(gene_names, "_")))))]]
+gene_names <- unlist(strsplit(gene_names,
+"_"))[seq(from=1,
+to=length(unlist(strsplit(gene_names, "_"))))[is.odd(seq(from=1,
+to=length(unlist(strsplit(gene_names, "_")))))]]
 REF_HITS$Gene_Names <- gene_names
 REF_HITS <- merge(REF_HITS, REF_META)
 #Check to make sure all the genes are in REF_HITS set after filtering
@@ -86,12 +96,18 @@ setdiff(list_genes, REF_HITS$Gene_Names)
 ```
 
 ### plot abundances of genes in reference dataset
-```{r}
-barplot(table(REF_HITS$Gene_Names)[order(table(REF_HITS$Gene_Names))], las= 2, main = "Ranked Abundance of Sporulation Genes (Reference Set)")
+\newpage
+\blandscape
+```{r, fig.width= 11, fig.height=8.5}
+barplot(table(REF_HITS$Gene_Names)[order(table(REF_HITS$Gene_Names))], cex.names = 0.25, 
+        las= 2, main = "Ranked Abundance of Sporulation Genes (Reference Set)")
 ```
 
+\elandscape
+
+\newpage
 ### Label spore formers and non spore formers in reference set
-```{r}
+```{r, results="hide"}
 spore_cols <- REF_HITS[,c(23,27)]
 genome_gene_count <- as.data.frame(table(spore_cols$Assembly))
 colnames(genome_gene_count) <- c("Assembly", "Freq")
@@ -101,26 +117,43 @@ spore_cols <- spore_cols[order(spore_cols$Freq),]
 spore_cols$cols <- spore_cols$`Spore.Forming.(Weller.and.Wu)`
 spore_cols[spore_cols$cols == "Y",]$cols <- "black"
 spore_cols[spore_cols$cols == "N",]$cols <- "grey"
-
-barplot(spore_cols$Freq, las= 2, cex.axis = 1, cex.names = 0.5, names.arg = spore_cols$Assembly, col=spore_cols$cols, main="Ranked Abundance of Sporulation Genes in Genomes (Reference Set)")
 ```
+\newpage
+\blandscape
+```{r, fig.width= 11, fig.height=8.5}
+barplot(spore_cols$Freq, las= 2, cex.axis = 1, cex.names = 0.25,
+        names.arg = spore_cols$Assembly, col=spore_cols$cols,
+        main="Ranked Abundance of Sporulation Genes in Genomes (Reference Set)")
+```
+\elandscape
 
+\newpage
 ### Convert abundance to presence/abscene
-```{r}
+```{r, results="hide"}
 gene_by_genome <- table(REF_HITS$Gene_Names, REF_HITS$Assembly)
 gene_by_genome[gene_by_genome > 0] <- 1
 gene_by_genome_df <- as.data.frame(gene_by_genome)
 colnames(gene_by_genome_df) <- c("Gene_Names", "Assembly", "Presence")
 gene_by_genome_df <- merge(gene_by_genome_df, spore_cols)
 gene_by_genome_df[order(gene_by_genome_df$Freq),]
-heatmap.2(gene_by_genome, trace="none", margins = c(10,10), key = FALSE, sepwidth=c(0.5,0.5), sepcolor="black")
+```
+\newpage
+\blandscape
+```{r, fig.width= 11, fig.height=8.5}
+heatmap.2(gene_by_genome, trace="none", margins = c(10,10), cexRow=0.25,
+          cexCol=0.25,
+          key = FALSE, sepwidth=c(0.5,0.5), sepcolor="black")
+```
+\elandscape
+\newpage
+```{r, results= "hide"}
 gene_presence <- ddply(gene_by_genome_df, .(Gene_Names), summarise, sum_gene_presence = sum(Presence))
 gene_by_genome_df <- merge(gene_by_genome_df, gene_presence)
 gene_by_genome_df <- gene_by_genome_df[order(gene_by_genome_df$sum_gene_presence),]
 ```
 
 ### Convert presence of Gene to percent of presence in among the 200 Genomes
-```{r}
+```{r, results="hide"}
 gene_by_genome_df_hits <- gene_by_genome_df[gene_by_genome_df$Presence > 0,]
 sporu_vs_non <- table(gene_by_genome_df_hits$Gene_Names ,gene_by_genome_df_hits$cols)
 sporu_vs_non <- melt(sporu_vs_non)
@@ -129,17 +162,33 @@ sporu_vs_non$Percent_Core_Set = sporu_vs_non$value/200
 colnames(sporu_vs_non) <- c("Gene_Names", "cols", "hits", "Percent_Core_Set")
 ```
 
+\newpage
+\blandscape
 ### Plot prevalence of genes in reference dataset in ranked order
-```{r}
-ggplot(sporu_vs_non, aes(y=Percent_Core_Set, x=reorder(Gene_Names, -rep(sporu_vs_non[sporu_vs_non$cols == "black",]$Percent_Core_Set + sporu_vs_non[sporu_vs_non$cols == "grey",]$Percent_Core_Set, 2)), color=cols)) + geom_point(stat="identity", size=6, alpha=0.75) + ggtitle("Rank Prevalence of Sporulation Gene in Reference Set") + xlab("Gene_Names") + ylab("Percent Prevalence in Reference Set") + theme_bw(base_size = 40) + scale_color_discrete("Sporulator", labels=c("Yes", "No")) + theme(axis.text.x = element_text(angle = 90, vjust = 0.4, size = 8))
+```{r, fig.width= 11, fig.height=8.5}
+ggplot(sporu_vs_non,
+       aes(y=Percent_Core_Set,
+                         x=reorder(Gene_Names,
+                                   -rep(sporu_vs_non[sporu_vs_non$cols == "black",]$Percent_Core_Set +
+                                                                          sporu_vs_non[sporu_vs_non$cols == "grey",]$Percent_Core_Set, 2)),
+           color=cols)) +
+  geom_point(stat="identity", size=6, alpha=0.75) +
+  ggtitle("Rank Prevalence of Sporulation Gene in Reference Set") + xlab("Gene_Names") +
+  ylab("Percent Prevalence in Reference Set") +
+  theme_bw(base_size = 10) + scale_color_discrete("Sporulator", labels=c("Yes", "No")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.4, size = 4))
 ```
+\elandscape
 
+\newpage
 ### Weight the prevalence of genes in the reference dataset
 
 The weight is equal to the prevalence of a gene in the reference dataset among sporulators minus the prevalence of a gene in the reference dataset among nonsporulators all divided by the prevalence of a gene in the reference dataset among sporulators. This allows for a gene that is a present in exclusively sporulator to count as one and a gene with some representation among non-sporulators to be discounted by that prevalence. In some cases the genes more prevalent in nonsporulator than sporulators and that negative value was returned to a value of zero.
 
-```{r}
-gene_weights <- as.data.frame(cbind(as.vector(sporu_vs_non[sporu_vs_non$cols == "black",]$Gene_Names),as.vector(as.numeric((sporu_vs_non[sporu_vs_non$cols == "black",]$Percent_Core_Set-sporu_vs_non[sporu_vs_non$cols == "grey",]$Percent_Core_Set)/sporu_vs_non[sporu_vs_non$cols == "black",]$Percent_Core_Set))))
+```{r, results="hide"}
+gene_weights <- as.data.frame(cbind(as.vector(sporu_vs_non[sporu_vs_non$cols == "black",]$Gene_Names),
+                                    as.vector(as.numeric((sporu_vs_non[sporu_vs_non$cols == 
+                                                                         "black",]$Percent_Core_Set-sporu_vs_non[sporu_vs_non$cols == "grey",]$Percent_Core_Set)/sporu_vs_non[sporu_vs_non$cols == "black",]$Percent_Core_Set))))
 colnames(gene_weights) <- c("Gene_Names", "weight")
 gene_weights$weight <- as.numeric(as.character(gene_weights$weight))
 gene_weights[gene_weights$weight < 0,]$weight <- 0
@@ -155,33 +204,50 @@ colnames(sporu_vs_non) <- c("Assembly", "cols", "hits", "Percent_Core_Set")
 sporu_vs_non <- merge(sporu_vs_non, weighted_percents)
 ```
 
-
+\newpage
+\blandscape
 ### Plot
-```{r}
-ggplot(sporu_vs_non, aes(y=weighted_percent*100, x=reorder(Assembly, -(hits)), color=cols)) + geom_point(stat="identity", size=6, alpha = 0.5) + ggtitle("Rank Prevalence of Sporulation Gene in Reference Set") + xlab("Assembly") + ylab("Percent of Sporulation Gene Set") + theme_bw(base_size = 40) + scale_color_discrete("Sporulator", labels=c("Yes", "No")) + theme(axis.text.x = element_text(angle = -90, vjust = 0.4, hjust = 0, size = 8)) 
+```{r, fig.width= 11, fig.height=8.5}
+ggplot(sporu_vs_non, aes(y=weighted_percent*100, x=reorder(Assembly, -(hits)), color=cols)) +
+  geom_point(stat="identity", size=6, alpha = 0.5) +
+  ggtitle("Rank Prevalence of Sporulation Gene in Reference Set") + xlab("Assembly") +
+  ylab("Percent of Sporulation Gene Set") +
+  theme_bw(base_size = 10) + scale_color_discrete("Sporulator", labels=c("Yes", "No")) +
+  theme(axis.text.x = element_text(angle = -90, vjust = 0.4, hjust = 0, size = 8)) 
 ```
 
+\newpage
 
 ### Plot
-```{r}
-p <- p + geom_density(aes(x=weighted_percent, fill=cols), alpha=0.2, adjust=2) + xlab("Weighted Percent of Sporulation Gene Set") + scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) + theme_minimal(base_size = 40)
+```{r, fig.width= 11, fig.height=8.5}
+p <- ggplot(sporu_vs_non) +
+  geom_density(aes(x=weighted_percent, fill=cols), alpha=0.2, adjust=2) +
+  xlab("Weighted Percent of Sporulation Gene Set") +
+  scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) +
+  theme_minimal(base_size = 10)
 p
 ```
+\elandscape
+\newpage
 
 ### Bring in Tyson dataset
-
-```{r}
-colnames(UBA_HITS) <- c("qseqid","sseqid","pident","length","qlen","slen","mismatch","gapopen","qstart","qend","sstart","send","qcov","evalue","bitscore")
+```{r, results="hide"}
+colnames(UBA_HITS) <- c("qseqid","sseqid","pident","length","qlen","slen","mismatch",
+                        "gapopen","qstart","qend","sstart","send","qcov","evalue","bitscore")
 length(unique(UBA_HITS$Assembly))
 UBA_HITS$Genome = str_sub(UBA_HITS$sseqid,1,4)
 list_genomes<-unique(UBA_HITS$Genome)
 
 
-gene_names <- unlist(strsplit(as.vector(UBA_HITS$qseqid), "\\|"))[grep("_", unlist(strsplit(as.vector(UBA_HITS$qseqid), "\\|")))]
+gene_names <- unlist(strsplit(as.vector(UBA_HITS$qseqid),
+                              "\\|"))[grep("_", unlist(strsplit(as.vector(UBA_HITS$qseqid),
+                                                                "\\|")))]
 gene_names_spl <- strsplit(gene_names, "_")
 
 is.odd <- function(x) x %% 2 != 0
-gene_names <- unlist(strsplit(gene_names, "_"))[seq(from=1, to=length(unlist(strsplit(gene_names, "_"))))[is.odd(seq(from=1, to=length(unlist(strsplit(gene_names, "_")))))]]
+gene_names <- unlist(strsplit(gene_names, "_"))[seq(from=1,
+to=length(unlist(strsplit(gene_names, "_"))))[is.odd(seq(from=1,
+to=length(unlist(strsplit(gene_names, "_")))))]]
 
 UBA_HITS$Gene_Names <- gene_names
 list_genes<-unique(UBA_HITS$Gene_Names)
@@ -234,11 +300,15 @@ colnames(genes_not_found) <- c("Gene_Names","Presence")
 
 
 genomes_not_found <-setdiff(UBA_HITS_DATA$UBA.Genome.ID, count_by_gene$Assembly)
-genomes_not_found <- as.data.frame(cbind(genomes_not_found, rep(0, length(genomes_not_found))))
+genomes_not_found <- as.data.frame(cbind(genomes_not_found,
+                                         rep(0, length(genomes_not_found))))
 colnames(genomes_not_found) <- c("Assembly","Presence")
 
 
-not_founds <- merge(c(as.vector(unique(genes_not_found$Gene_Names)),as.vector(unique(count_by_gene$Gene_Names))),c(as.vector(unique(count_by_gene$Assembly)),as.vector(unique(genomes_not_found$Assembly))))
+not_founds <- merge(c(as.vector(unique(genes_not_found$Gene_Names)),
+                      as.vector(unique(count_by_gene$Gene_Names))),
+                    c(as.vector(unique(count_by_gene$Assembly)),
+                      as.vector(unique(genomes_not_found$Assembly))))
  
 
 
@@ -248,12 +318,13 @@ colnames(not_founds) <- c("Assembly","Gene_Names","Presence")
 count_by_gene <- rbind(count_by_gene, not_founds)
 ```
 
-```{r}
+```{r, results="hide"}
 freq_Parks<- ddply(count_by_gene, .(Gene_Names), summarise, Freq=sum(as.numeric(Presence)))
 count_by_gene <- merge(count_by_gene, freq_Parks)
 count_by_gene$`Spore.Forming.(Weller.and.Wu)` <- "?"
 count_by_gene$cols <- "blue"
-gene_presence_Parks<- ddply(count_by_gene, .(Assembly), summarise, sum_gene_presence=sum(as.numeric(Presence)))
+gene_presence_Parks<- ddply(count_by_gene, .(Assembly),
+                            summarise, sum_gene_presence=sum(as.numeric(Presence)))
 count_by_gene <- merge(count_by_gene, gene_presence_Parks)
 
 count_by_gene <- count_by_gene[c(2,1,3,5,4,6,7)]
@@ -262,20 +333,31 @@ count_by_gene_hits <- count_by_gene[count_by_gene$Presence > 0,]
 count_by_gene_hits <- merge(count_by_gene_hits, gene_weights)
 
 
-weighted_percents <- ddply(count_by_gene_hits, .(Assembly), summarise, weighted_percent= sum(weight)/150)
+weighted_percents <- ddply(count_by_gene_hits, .(Assembly),
+                           summarise, weighted_percent= sum(weight)/150)
 
 count_by_gene_hits_count <- table(count_by_gene_hits$Gene_Names ,count_by_gene_hits$cols)
 count_by_gene_hits_count <- melt(count_by_gene_hits_count)
 count_by_gene_hits_count$Percent_Core_Set = count_by_gene_hits_count$value/1201
 colnames(count_by_gene_hits_count) <- c("Gene_Names", "cols", "hits", "Percent_Core_Set")
 ```
-
-```{r}
-ggplot(count_by_gene_hits_count, aes(y=Percent_Core_Set, x=reorder(Gene_Names, -hits), color=cols)) + geom_point(stat="identity", size=6, alpha=0.75) + xlab("Gene_Names") + ylab("Percent Prevalence in PARKS Set") + theme_bw(base_size = 40) + scale_color_discrete("Sporulator", labels=c("?")) + theme(axis.text.x = element_text(angle = 90, vjust = 0.4, size = 8))
+\newpage
+\blandscape
+### Plot
+```{r, fig.width= 11, fig.height=8.5}
+ggplot(count_by_gene_hits_count,
+       aes(y=Percent_Core_Set, x=reorder(Gene_Names, -hits), color=cols)) +
+  geom_point(stat="identity", size=6, alpha=0.75) +
+  xlab("Gene_Names") +
+  ylab("Percent Prevalence in PARKS Set") +
+  theme_bw(base_size = 10) +
+  scale_color_discrete("Sporulator", labels=c("?")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.4, size = 4))
 ```
+\elandscape
+\newpage
 
-
-```{r}
+```{r, results="hide"}
 count_by_gene_hits_count <- count_by_gene[count_by_gene$Presence > 0,]
 count_by_gene_hits_count <- table(count_by_gene_hits_count$Assembly ,count_by_gene_hits_count$cols)
 count_by_gene_hits_count <- melt(count_by_gene_hits_count)
@@ -288,42 +370,98 @@ count_by_gene_hits_count <-merge(count_by_gene_hits_count, weighted_percents)
 ```{r}
 PARKS_and_REF <- rbind(sporu_vs_non, count_by_gene_hits_count)
 ```
-
-```{r}
-ggplot(PARKS_and_REF, aes(y=Percent_Core_Set, x=reorder(Assembly, -hits), color=cols)) + geom_point(stat="identity", size=6, alpha=0.75) + xlab("Gene_Names") + ylab("Percent Prevalence\nof Sporulation Set in Genomes") + theme_bw(base_size = 40) + scale_color_discrete("Sporulator", labels=c("Yes","No","?")) + theme(axis.text.x = element_text(angle = 90, vjust = 0.4, size = 8))
+\newpage
+\blandscape
+### Plot
+```{r, fig.width= 11, fig.height=8.5}
+ggplot(PARKS_and_REF, aes(y=Percent_Core_Set, x=reorder(Assembly, -hits), color=cols)) +
+  geom_point(stat="identity", size=6, alpha=0.75) +
+  xlab("Gene_Names") +
+  ylab("Percent Prevalence\nof Sporulation Set in Genomes") +
+  theme_bw(base_size = 10) +
+  scale_color_discrete("Sporulator", labels=c("Yes","No","?")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.4, size = 4))
 ```
+\newpage
 
-```{r}
-p <- ggplot(PARKS_and_REF) + geom_dotplot(data=PARKS_and_REF, aes(x=Percent_Core_Set, fill=cols), alpha=0.5, dotsize = 1.2, binwidth = 1/180) + scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) + theme_bw(base_size = 40)
+### Plot
+```{r, fig.width= 11, fig.height=8.5}
+p <- ggplot(PARKS_and_REF) +
+  geom_dotplot(data=PARKS_and_REF, aes(x=Percent_Core_Set, fill=cols),
+               alpha=0.5, dotsize = 1.2, binwidth = 1/180) +
+  scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) +
+  theme_bw(base_size = 20)
  
-p <- p + geom_density(aes(x=Percent_Core_Set, fill=cols), alpha=0.2, adjust=5) + xlab("Percent of Sporulation Gene Set") + scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) + theme_bw(base_size = 40) + scale_x_continuous(limits=c(0,1)) + scale_y_continuous(limits=c(0,10))
+p <- p + geom_density(aes(x=Percent_Core_Set, fill=cols), alpha=0.2, adjust=5) +
+  xlab("Percent of Sporulation Gene Set") +
+  scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) +
+  theme_bw(base_size = 20) + scale_x_continuous(limits=c(0,1)) +
+  scale_y_continuous(limits=c(0,10))
 p
 ```
 
-```{r}
-p <- ggplot(PARKS_and_REF) + geom_dotplot(data=PARKS_and_REF, aes(x=weighted_percent, fill=cols), alpha=0.5,dotsize = 1.2, binwidth = 1/180) + scale_fill_discrete("Sporulator", labels=c("Yes", "No"))
+\newpage
+### Plot
+```{r, fig.width= 11, fig.height=8.5}
+p <- ggplot(PARKS_and_REF) +
+  geom_dotplot(data=PARKS_and_REF, aes(x=weighted_percent, fill=cols),
+               alpha=0.5,dotsize = 1.2, binwidth = 1/180) +
+  scale_fill_discrete("Sporulator", labels=c("Yes", "No"))
   
-p <- p + geom_density(aes(x=as.numeric(weighted_percent), fill=cols), alpha=0.2, adjust=5) + xlab("Weighted Percent of Sporulation Gene Set") + scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) + theme_bw(base_size = 40) + scale_x_continuous(limits=c(0,1))
-mu <- ddply(PARKS_and_REF, "cols", summarise, grp.mean=mean(Percent_Core_Set), grp.sd= sd(Percent_Core_Set))
+p <- p +
+  geom_density(aes(x=as.numeric(weighted_percent), fill=cols), alpha=0.2, adjust=5) +
+  xlab("Weighted Percent of Sporulation Gene Set") +
+  scale_fill_discrete("Sporulator", labels=c("Yes", "No", "?")) +
+  scale_x_continuous(limits=c(0,1))
+mu <- ddply(PARKS_and_REF, "cols", summarise,
+            grp.mean=mean(Percent_Core_Set), grp.sd= sd(Percent_Core_Set))
 
-weighted_mu <- ddply(PARKS_and_REF, "cols", summarise, grp.mean=mean(weighted_percent), grp.sd= sd(weighted_percent))
-p <- p + geom_vline(aes(xintercept=weighted_mu[2,2] + 3.290*weighted_mu[2,3]))
-p <- p + geom_vline(aes(xintercept=weighted_mu[1,2] - 1*weighted_mu[1,3]))
+weighted_mu <- ddply(PARKS_and_REF, "cols", summarise,
+                     grp.mean=mean(weighted_percent), grp.sd= sd(weighted_percent))
+p <- p +
+  geom_vline(aes(xintercept=weighted_mu[2,2] +
+                   3.290*weighted_mu[2,3]))
+p <- p +
+  geom_vline(aes(xintercept=weighted_mu[1,2] - 1*weighted_mu[1,3]))
 p
 ```
-
+\elandscape
+\newpage
 ```{r}
 PARKS <- PARKS_and_REF[PARKS_and_REF$cols == "blue", ]
-PARKS$LIKELY_SPORULATOR <- PARKS_and_REF[PARKS_and_REF$cols == "blue", ]$weighted_percent > weighted_mu[2,2] + 3.290*weighted_mu[2,3]
+PARKS$LIKELY_SPORULATOR <- PARKS_and_REF[PARKS_and_REF$cols == "blue", ]$weighted_percent > weighted_mu[2,2] +
+  3.290*weighted_mu[2,3]
 PARKS$SPORULATOR <- PARKS_and_REF[PARKS_and_REF$cols == "blue", ]$weighted_percent > weighted_mu[1,2] - 1*weighted_mu[1,3]
 
-PARKS <- ddply(PARKS, .(Assembly), mutate, weighted_percent_difference = (Percent_Core_Set - weighted_percent)/Percent_Core_Set, weighted_difference = (Percent_Core_Set - weighted_percent))
-ggplot(PARKS) + geom_boxplot(aes(x=SPORULATOR, y=weighted_percent_difference), position = "dodge") + geom_jitter(aes(x=SPORULATOR, y=weighted_percent_difference, color=LIKELY_SPORULATOR)) + theme_bw(base_size = 30)
+PARKS <- ddply(PARKS, .(Assembly), mutate,
+               weighted_percent_difference = (Percent_Core_Set - weighted_percent)/Percent_Core_Set,
+               weighted_difference = (Percent_Core_Set - weighted_percent))
 ```
-
+\newpage
+\blandscape
+### Plot
+```{r, fig.width= 11, fig.height=8.5}
+ggplot(PARKS) +
+  geom_boxplot(aes(x=SPORULATOR, y=weighted_percent_difference), position = "dodge") +
+  geom_jitter(aes(x=SPORULATOR, y=weighted_percent_difference, color=LIKELY_SPORULATOR)) +
+  theme_bw(base_size = 18)
+```
+\elandscape
+\newpage
 ```{r}
 REFS <- PARKS_and_REF[PARKS_and_REF$cols == "black" | PARKS_and_REF$cols == "grey", ]
 
-REFS <- ddply(REFS, .(Assembly, cols), mutate, weighted_percent_difference = (Percent_Core_Set - weighted_percent)/Percent_Core_Set, weighted_difference = (Percent_Core_Set - weighted_percent))
-ggplot(REFS) + geom_boxplot(aes(x=cols, y=weighted_percent_difference), position = "dodge") + geom_jitter(aes(x=cols, y=weighted_percent_difference)) + theme_bw(base_size = 30) + scale_x_discrete(labels=(c("Sporulators","Non Sporulators"))) + xlab("")
+REFS <- ddply(REFS, .(Assembly, cols), mutate,
+              weighted_percent_difference = (Percent_Core_Set - weighted_percent)/Percent_Core_Set,
+              weighted_difference = (Percent_Core_Set - weighted_percent))
 ```
+\newpage
+\blandscape
+### Plot
+```{r, fig.width= 11, fig.height=8.5}
+ggplot(REFS) + 
+  geom_boxplot(aes(x=cols, y=weighted_percent_difference), position = "dodge") +
+  geom_jitter(aes(x=cols, y=weighted_percent_difference)) + theme_bw(base_size = 30) +
+  scale_x_discrete(labels=(c("Sporulators","Non Sporulators"))) + xlab("")
+```
+\elandscape
