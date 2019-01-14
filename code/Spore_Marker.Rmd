@@ -9,13 +9,15 @@ output:
 ---
 
 ## Setup Libraries
-```{r}
-library("ggplot2")
-library("stringr")
-library("reshape2")
-library("plyr")
-library("gplots")
-library("openxlsx")
+```{r, results="hide"}
+library(ggplot2)
+library(stringr)
+library(reshape2)
+library(plyr)
+library(gplots)
+library(openxlsx)
+library(ggpubr)
+library(ggsignif)
 ```
 
 ## Download BLAST results and metadata
@@ -458,10 +460,37 @@ REFS <- ddply(REFS, .(Assembly, cols), mutate,
 \newpage
 \blandscape
 ### Plot
+```{r}
+anno_df1 <- compare_means(weighted_percent_difference ~ cols, data = REFS, method = "t.test", p.adjust.method = "holm") %>%
+ mutate(y_pos = 1, p.adj = format.pval(p.adj, digits = 2))
+
+anno_df1 <- compare_means(weighted_percent ~ cols, data = REFS, method = "t.test", p.adjust.method = "holm") %>%
+ mutate(y_pos = 1, p.adj = format.pval(p.adj, digits = 2))
+```
+
 ```{r, fig.width= 11, fig.height=8.5}
 ggplot(REFS) + 
   geom_boxplot(aes(x=cols, y=weighted_percent_difference), position = "dodge") +
   geom_jitter(aes(x=cols, y=weighted_percent_difference)) + theme_bw(base_size = 30) +
-  scale_x_discrete(labels=(c("Sporulators","Non Sporulators"))) + xlab("")
+  scale_x_discrete(labels=(c("Sporulators","Non Sporulators"))) + xlab("") +
+    geom_signif(
+    data=anno_df1, 
+    aes(xmin = group1, xmax = group2, annotations = p.adj, y_position = y_pos), 
+    manual= TRUE
+  )
+```
+
+\newpage
+
+```{r, fig.width= 11, fig.height=8.5}
+ggplot(REFS) + 
+  geom_boxplot(aes(x=cols, y=weighted_percent), position = "dodge") +
+  geom_jitter(aes(x=cols, y=weighted_percent)) + theme_bw(base_size = 30) +
+  scale_x_discrete(labels=(c("Sporulators","Non Sporulators"))) + xlab("") +
+    geom_signif(
+    data=anno_df1, 
+    aes(xmin = group1, xmax = group2, annotations = p.adj, y_position = y_pos), 
+    manual= TRUE
+  )
 ```
 \elandscape
