@@ -508,17 +508,12 @@ include_graphics("../data/heatmap9.png")
 
 ###Phylogentics
 ```{r, results="hide"}
-head(UBA_RIBOS)
-colnames(UBA_RIBOS) <- c("target name","accession","query name",
-  "accession","E-value","score","bias","E-value","score","bias",
+colnames(UBA_RIBOS) <- c("target name","taccession","query name",
+  "qaccession","E-value","score","bias","dom E-value","dom score","dom bias",
   "exp","reg","clu","ov","env", "dom","rep","inc")
-colnames(REF_RIBOS) <- c("target name","accession","query name",
-  "accession","E-value","score","bias","E-value","score","bias",
+colnames(REF_RIBOS) <- c("target name","taccession","query name",
+  "qaccession","E-value","score","bias","dom E-value","dom score","dom bias",
   "exp","reg","clu","ov","env", "dom","rep","inc")
-table(REF_RIBOS$`query name`)
-ggplot(REF_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
-REF_RIBOS <- REF_RIBOS[REF_RIBOS$score >= 50,]
-ggplot(UBA_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
 REF_GENOMES <- strsplit(as.vector(unlist(strsplit(as.vector(REF_RIBOS$`target name`),
                "\\|"))[grep("_", unlist(strsplit(as.vector(REF_RIBOS$`target name`),
                "\\|")))]),"_")
@@ -533,20 +528,66 @@ for(i in 1:length(REF_GENOMES)){
   Nuccore_ID[i] <- p
 }
 REF_RIBOS$Nuccore_ID <- Nuccore_ID
-head(REF_RIBOS)
+
 REF_RIBOS <- merge(REF_RIBOS, REF_META)
-table(REF_RIBOS$Assembly)
-ggplot(UBA_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
-table(UBA_RIBOS$`query name`)
-UBA_RIBOS <- UBA_RIBOS[UBA_RIBOS$score >= 50,]
-ggplot(UBA_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
+
+ggplot(REF_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
+REF_RIBOS_Cutoff <- REF_RIBOS[REF_RIBOS$score >= 50,]
+gen_cutoffs_df <- ddply(REF_RIBOS_Cutoff, .(`query name`),
+                        summarise, mean_score = mean(score),
+                        sd_score = sd(score), min_score = min(score),
+                        max_score = max(score),
+                        cutoff=mean(score)-6*sd(score))
+
+UBA_RIBOS <- rbind(UBA_RIBOS[UBA_RIBOS$`query name` == "NOG.COG0094.clustalo_raw" & UBA_RIBOS$score >= 135.79241,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "NOG.COG0096.clustalo_raw" & UBA_RIBOS$score >= 58.74311,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR00060" & UBA_RIBOS$score >= 87.85,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01009" & UBA_RIBOS$score >= 114.50,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01044" & UBA_RIBOS$score >= 73.65,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01049" & UBA_RIBOS$score >= 72.75,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01050" & UBA_RIBOS$score >= 89.35,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01067" & UBA_RIBOS$score >= 111.10,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01079" & UBA_RIBOS$score >= 53.70,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01164" & UBA_RIBOS$score >= 76.85,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01171" & UBA_RIBOS$score >= 174.50,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR03625" & UBA_RIBOS$score >= 142.90,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR03635" & UBA_RIBOS$score >= 88.70,],
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR03653" & UBA_RIBOS$score >= 130.10,])
+
+REF_RIBOS <- rbind(REF_RIBOS[REF_RIBOS$`query name` == "NOG.COG0094.clustalo_raw" & REF_RIBOS$score >= 135.79241,],
+  REF_RIBOS[REF_RIBOS$`query name` == "NOG.COG0096.clustalo_raw" & REF_RIBOS$score >= 58.74311,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR00060" & REF_RIBOS$score >= 87.85,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01009" & REF_RIBOS$score >= 114.50,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01044" & REF_RIBOS$score >= 73.65,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01049" & REF_RIBOS$score >= 72.75,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01050" & REF_RIBOS$score >= 89.35,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01067" & REF_RIBOS$score >= 111.10,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01079" & REF_RIBOS$score >= 53.70,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01164" & REF_RIBOS$score >= 76.85,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR01171" & REF_RIBOS$score >= 174.50,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR03625" & REF_RIBOS$score >= 142.90,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR03635" & REF_RIBOS$score >= 88.70,],
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR03653" & REF_RIBOS$score >= 130.10,])
+length(unique(str_sub(UBA_RIBOS$`target name`,1,4)))
+ggplot(REF_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
+
+table(REF_RIBOS$Assembly, REF_RIBOS$`query name`)
+
+Colors=c("white", "black")
+Colors=colorRampPalette(Colors)(5)
+heatmap.2(table(REF_RIBOS$Assembly, REF_RIBOS$`query name`), col=Colors, trace="none", margins = c(10,10), cexRow=0.25,
+          cexCol=1,
+          key = TRUE, sepwidth=c(0.5,0.5), sepcolor="black")
+
 UBA_RIBOS$Assembly <- str_sub(UBA_RIBOS$`target name`, 1, 4)
-heatmap.2(table(UBA_RIBOS$Assembly, UBA_RIBOS$`query name`))
+gene_table <- as.matrix(table(UBA_RIBOS$Assembly, UBA_RIBOS$`query name`))
+gene_table
+
 Colors=c("white", "black")
 Colors=colorRampPalette(Colors)(5)
 heatmap.2(table(UBA_RIBOS$Assembly, UBA_RIBOS$`query name`), col=Colors, trace="none", margins = c(10,10), cexRow=0.25,
           cexCol=1,
           key = TRUE, sepwidth=c(0.5,0.5), sepcolor="black")
-
+UBA_RIBOS[UBA_RIBOS$Assembly == "DBGA",]
 ```
 
