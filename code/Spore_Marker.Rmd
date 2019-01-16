@@ -7,7 +7,6 @@ output:
         includes:
             in_header: header.tex 
 ---
-
 ## Setup Libraries
 ```{r, results="hide"}
 library(ggplot2)
@@ -18,6 +17,7 @@ library(gplots)
 library(openxlsx)
 library(ggpubr)
 library(ggsignif)
+library(knitr)
 ```
 
 ## Download BLAST results and metadata
@@ -167,7 +167,7 @@ colnames(sporu_vs_non) <- c("Gene_Names", "cols", "hits", "Percent_Core_Set")
 \newpage
 \blandscape
 ### Plot prevalence of genes in reference dataset in ranked order
-```{r, fig.width= 11, fig.height=8.5}
+```{r, fig.width=11, fig.height=8.5}
 ggplot(sporu_vs_non,
        aes(y=Percent_Core_Set,
                          x=reorder(Gene_Names,
@@ -494,3 +494,12 @@ ggplot(REFS) +
   )
 ```
 \elandscape
+\newpage
+
+With the expanding phylogeny of Firmicutes that has arose from metagenomic binning efforts. We can look back and see if there are new major branches at which we now predict a loss of endosporulation to occur.
+
+As a first pass at this I used the web-based AnnoTree software. The software allows you to visualize the prevalance of genes or sets of genes at varied phylogenetic depth. I selected the 9 genes that formed the most inclusize cluster of "genes for sporulators by sporulators" and visualized their prevalence at the phylum level.
+
+```{r}
+include_graphics("../data/heatmap9.png")
+```
