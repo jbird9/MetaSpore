@@ -589,5 +589,7 @@ heatmap.2(table(UBA_RIBOS$Assembly, UBA_RIBOS$`query name`), col=Colors, trace="
           cexCol=1,
           key = TRUE, sepwidth=c(0.5,0.5), sepcolor="black")
 UBA_RIBOS[UBA_RIBOS$Assembly == "DBGA",]
+gene_table <- gene_table[,c(1:13)]
+complete_gene_table <- gene_table[apply(gene_table, 1, function(row) all(row != 0 )),]
 ```
 
