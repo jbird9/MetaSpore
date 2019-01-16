@@ -28,6 +28,8 @@ REF_META <- read.xlsx(xlsxFile = "../data/WWRefence_Metadata.xlsx", sheet = 1)
 UBA_HITS_DATA <- read.xlsx("../data/tyson_genome_list_1201_firms.xlsx")
 UBA_HITS <- read.table("../data/B_subtilis_spo_157_gene_in_PARKS_FIRMICUTES.txt",
                        header = F, sep="\t")
+REF_RIBOS <- read.table("../data/ribo_prot_REFS2.txt", header = F, sep="\t")
+UBA_RIBOS <- read.table("../data/ribo_prot_PARKS.txt", header = F, sep="\t")
 ```
 
 ## Combine Data
@@ -43,8 +45,8 @@ REF_HITS <- REF_HITS[!duplicated(REF_HITS$sseqid),]
 
 REF_HITS <- REF_HITS[order(REF_HITS$bitscore, decreasing = T),]
 REF_GENOMES <- strsplit(as.vector(unlist(strsplit(as.vector(REF_HITS$sseqid),
-                                                  "\\|"))[grep("_", unlist(strsplit(as.vector(REF_HITS$sseqid),
-                                                                                    "\\|")))]),"_")
+               "\\|"))[grep("_", unlist(strsplit(as.vector(REF_HITS$sseqid),
+               "\\|")))]),"_")
 Nuccore_ID = ""
 for(i in 1:length(REF_GENOMES)){
   if(REF_GENOMES[[i]][1] == "NC" | REF_GENOMES[[i]][1] == "NZ"){
@@ -503,3 +505,35 @@ As a first pass at this I used the web-based AnnoTree software. The software all
 ```{r}
 include_graphics("../data/heatmap9.png")
 ```
+
+###Phylogentics
+```{r, results="hide"}
+head(UBA_RIBOS)
+colnames(UBA_RIBOS) <- c("target name","accession","query name",
+  "accession","E-value","score","bias","E-value","score","bias",
+  "exp","reg","clu","ov","env", "dom","rep","inc")
+colnames(REF_RIBOS) <- c("target name","accession","query name",
+  "accession","E-value","score","bias","E-value","score","bias",
+  "exp","reg","clu","ov","env", "dom","rep","inc")
+table(REF_RIBOS$`query name`)
+ggplot(REF_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
+REF_RIBOS <- REF_RIBOS[REF_RIBOS$score >= 50,]
+REF_GENOMES <- strsplit(as.vector(unlist(strsplit(as.vector(REF_RIBOS$`target name`),
+               "\\|"))[grep("_", unlist(strsplit(as.vector(REF_RIBOS$`target name`),
+               "\\|")))]),"_")
+Nuccore_ID = ""
+for(i in 1:length(REF_GENOMES)){
+  if(REF_GENOMES[[i]][1] == "NC" | REF_GENOMES[[i]][1] == "NZ"){
+    p <- str_c(REF_GENOMES[[i]][c(1,2)],"", collapse = "_")
+  }
+  else(
+    p <- str_c(REF_GENOMES[[i]][c(1)],"")
+  )
+  Nuccore_ID[i] <- p
+}
+REF_RIBOS$Nuccore_ID <- Nuccore_ID
+head(REF_RIBOS)
+REF_RIBOS <- merge(REF_RIBOS, REF_META)
+table(REF_RIBOS$Assembly)
+```
+
