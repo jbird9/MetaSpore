@@ -514,6 +514,7 @@ colnames(UBA_RIBOS) <- c("target name","taccession","query name",
 colnames(REF_RIBOS) <- c("target name","taccession","query name",
   "qaccession","E-value","score","bias","dom E-value","dom score","dom bias",
   "exp","reg","clu","ov","env", "dom","rep","inc")
+
 REF_GENOMES <- strsplit(as.vector(unlist(strsplit(as.vector(REF_RIBOS$`target name`),
                "\\|"))[grep("_", unlist(strsplit(as.vector(REF_RIBOS$`target name`),
                "\\|")))]),"_")
@@ -552,7 +553,7 @@ UBA_RIBOS <- rbind(UBA_RIBOS[UBA_RIBOS$`query name` == "NOG.COG0094.clustalo_raw
   UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR01171" & UBA_RIBOS$score >= 174.50,],
   UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR03625" & UBA_RIBOS$score >= 142.90,],
   UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR03635" & UBA_RIBOS$score >= 88.70,],
-  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR03653" & UBA_RIBOS$score >= 130.10,])
+  UBA_RIBOS[UBA_RIBOS$`query name` == "TIGR03953" & UBA_RIBOS$score >= 130.10,])
 
 REF_RIBOS <- rbind(REF_RIBOS[REF_RIBOS$`query name` == "NOG.COG0094.clustalo_raw" & REF_RIBOS$score >= 135.79241,],
   REF_RIBOS[REF_RIBOS$`query name` == "NOG.COG0096.clustalo_raw" & REF_RIBOS$score >= 58.74311,],
@@ -567,7 +568,7 @@ REF_RIBOS <- rbind(REF_RIBOS[REF_RIBOS$`query name` == "NOG.COG0094.clustalo_raw
   REF_RIBOS[REF_RIBOS$`query name` == "TIGR01171" & REF_RIBOS$score >= 174.50,],
   REF_RIBOS[REF_RIBOS$`query name` == "TIGR03625" & REF_RIBOS$score >= 142.90,],
   REF_RIBOS[REF_RIBOS$`query name` == "TIGR03635" & REF_RIBOS$score >= 88.70,],
-  REF_RIBOS[REF_RIBOS$`query name` == "TIGR03653" & REF_RIBOS$score >= 130.10,])
+  REF_RIBOS[REF_RIBOS$`query name` == "TIGR03953" & REF_RIBOS$score >= 130.10,])
 length(unique(str_sub(UBA_RIBOS$`target name`,1,4)))
 ggplot(REF_RIBOS, aes(x=score)) + geom_density() + facet_wrap(~`query name`)
 
@@ -580,16 +581,21 @@ heatmap.2(table(REF_RIBOS$Assembly, REF_RIBOS$`query name`), col=Colors, trace="
           key = TRUE, sepwidth=c(0.5,0.5), sepcolor="black")
 
 UBA_RIBOS$Assembly <- str_sub(UBA_RIBOS$`target name`, 1, 4)
-gene_table <- as.matrix(table(UBA_RIBOS$Assembly, UBA_RIBOS$`query name`))
-gene_table
+
 
 Colors=c("white", "black")
 Colors=colorRampPalette(Colors)(5)
 heatmap.2(table(UBA_RIBOS$Assembly, UBA_RIBOS$`query name`), col=Colors, trace="none", margins = c(10,10), cexRow=0.25,
           cexCol=1,
           key = TRUE, sepwidth=c(0.5,0.5), sepcolor="black")
-UBA_RIBOS[UBA_RIBOS$Assembly == "DBGA",]
-gene_table <- gene_table[,c(1:13)]
-complete_gene_table <- gene_table[apply(gene_table, 1, function(row) all(row != 0 )),]
+gene_table <- as.matrix(table(UBA_RIBOS$Assembly, UBA_RIBOS$`query name`))
+complete_gene_table_UBA <- gene_table[apply(gene_table, 1, function(row) all(row == 1 )),]
+gene_table <- as.matrix(table(REF_RIBOS$Assembly, REF_RIBOS$`query name`))
+complete_gene_table_REF <- gene_table[apply(gene_table, 1, function(row) all(row == 1 )),]
+
+Complete_REF_RIBOS <- REF_RIBOS[REF_RIBOS$Assembly %in% rownames(complete_gene_table_REF),]
+Complete_UBA_RIBOS <- UBA_RIBOS[UBA_RIBOS$Assembly %in% rownames(complete_gene_table_UBA),]
+write.csv(file = "../data/Complete_Set_Ribos_UBA.csv", x = Complete_UBA_RIBOS)
+write.csv(file = "../data/Complete_Set_Ribos_REF.csv", x = Complete_REF_RIBOS)
 ```
 
