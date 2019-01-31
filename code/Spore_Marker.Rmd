@@ -23,6 +23,7 @@ library(phylobase)
 library(ape)
 library(picante)
 library(phytools)
+library(segmented)
 ```
 
 ## Download BLAST results and metadata
@@ -678,31 +679,10 @@ ggplot(Complete_META, aes(x=log10(Percent_Core_Set*150), y=dist2root,color = col
 
 ggplot(Complete_META, aes(x=log10(weighted_percent*150), y=dist2root,color = cols)) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_smooth(method="lm")
 
-mod3 <- lm(Complete_META[Complete_META$cols != "blue",]$dist2root ~ log10(Complete_META[Complete_META$cols != "blue",]$weighted_percent*150))
-pred.frame3 <- data.frame(seq(-4.5, 0.5, length.out = length(log10(Complete_META[Complete_META$cols != "blue",]$weighted_percent*150))))
 gene_number <- Complete_META[Complete_META$cols != "blue",]$Percent_Core_Set * 150
-mod1 <- lm(Complete_META[Complete_META$cols != "blue",]$dist2root ~ log10(gene_number))
+
 gene_number_spo <- Complete_META[Complete_META$cols == "black",]$Percent_Core_Set * 150
-mod2 <- lm(Complete_META[Complete_META$cols == "black",]$dist2root ~ log10(gene_number_spo))
-pred.frame1 <- data.frame(seq(-0.5, 2, length.out = length(log10(gene_number))))
-pred.frame1.2 <- data.frame(seq(-0.5, 2, length.out = length(log10(gene_number_spo))))
 
-predict_test <-predict(mod2, interval = 'p' ,newdata = pred.frame1.2)
-predict_test[order(predict_test[,1]),]
-# Confidence Hulls Function
-add.hull <- function(model = "", pred.frame = ""){
-  PI.U <- as.vector(predict(model, interval = "p", newdata=pred.frame)[,3])
-  PI.L <- as.vector(predict(model, interval = "p", newdata=pred.frame)[,2])
-  PI.F <- as.vector(predict(model, interval = "p", newdata=pred.frame)[,1])
-  PI.U <- PI.U[order(PI.F)]
-  PI.L <- PI.L[order(PI.F)]
-  pred.frame2 <- unlist(pred.frame)
-  X.Vec <- c(pred.frame2, pred.frame2)
-  Y.Vec <- c(PI.U, PI.L)
-  polygon(X.Vec, Y.Vec, col= c(alpha("grey99", 0.9)), border = "red")
-}
-
-unlist(pred.frame1.2)
 gene_number2 <- Complete_META[Complete_META$cols == "blue",]$Percent_Core_Set * 150
 plot(Complete_META[Complete_META$cols == "blue",]$dist2root ~ log10(gene_number2), xlim = c(0, 2.5), ylim = c(0, 1.5), pch = 20, lwd = 2, bty = "n",
      cex = 2.5, cex.lab = 1, cex.axis = 1.5,
@@ -718,20 +698,20 @@ Complete_META_REF$log_gene_number <- log10(Complete_META_REF$Percent_Core_Set*15
 mod1 <- lm(dist2root~log_gene_number, data=Complete_META_REF)
 
 os<-segmented(mod1)
+os$
 plot.segmented(os)
-plot(os)
-Complete_META_REF$log_weight_percent <- log10(Complete_META_REF$weighted_percent)
-mod2 <- lm(dist2root~log_weight_percent, data=Complete_META_REF)
+predicted_df <- data.frame(os_pred = predict(os, Complete_META_REF), log_gene_number = Complete_META_REF$log_gene_number)
+ggplot(Complete_META[Complete_META$cols == "blue",], aes(x=log10(Percent_Core_Set*150), y=dist2root,color = cols)) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_smooth(method="lm")
+ggplot(Complete_META[Complete_META$cols == "blue",], aes(x=log10(Percent_Core_Set*150), y=dist2root,color = cols)) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_line(color='red',data = predicted_df, aes(x=log_gene_number, y=os_pred))
+
+Complete_META_REF$log_weighted_percent <- log10(Complete_META_REF$weighted_percent)
+mod2 <- lm(dist2root~log_weighted_percent, data=Complete_META_REF)
 
 os<-segmented(mod2)
 plot.segmented(os)
-plot(os)
-abline(a=mod1$coefficients[[1]], b=mod1$coefficients[[2]])
-abline(a=mod2$coefficients[[1]], b=mod2$coefficients[[2]])
+predicted_df <- data.frame(os_pred = predict(os, Complete_META_REF), log_weighted_percent = Complete_META_REF$log_weighted_percent)
 
-add.hull(model = mod2, pred.frame = pred.frame1.2)
-as.vector(pred.frame1.2[,1])
-predict(mod2, interval = "p", newdata=pred.frame1.2)[, 3]
-lm(as.vector(predict(mod2, interval = "p", newdata=pred.frame1.2)[, 3])~as.vector(pred.frame1.2[,1]))[[1]][[1]]
+ggplot(Complete_META[Complete_META$cols == "blue",], aes(x=log10(weighted_percent), y=dist2root,color = cols)) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_smooth(method="lm")
 
+ggplot(Complete_META[Complete_META$cols == "blue",], aes(x=log10(weighted_percent), y=dist2root,color = cols)) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_line(color='red',data = predicted_df, aes(x=log_weighted_percent, y=os_pred))
 ```
