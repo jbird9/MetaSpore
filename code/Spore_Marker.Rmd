@@ -150,7 +150,7 @@ gene_by_genome_df[order(gene_by_genome_df$Freq),]
 \newpage
 \blandscape
 ```{r, fig.width= 11, fig.height=8.5}
-heatmap.2(gene_by_genome, trace="none", margins = c(10,10), cexRow=0.25,
+heatmap.2(gene_by_genome, trace="none", margins = c(10,10), cexRow=2,
           cexCol=0.25,
           key = FALSE, sepwidth=c(0.5,0.5), sepcolor="black")
 ```
@@ -775,7 +775,8 @@ ggplot() + geom_point(aes(x=log10(Complete_META[Complete_META$cols != "blue",]$w
 
 ggplot() + geom_point(aes(x=log10(Complete_META[Complete_META$cols != "blue",]$weighted_percent), y=Complete_META[Complete_META$cols != "blue",]$dist2root,color = Complete_META[Complete_META$cols != "blue",]$cols), size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_line(aes(x=log10(new_df3$weighted_percent), y=new_df3$lwr), color = "red", linetype = "dashed", size = 2) + geom_line(aes(x=log10(new_df3$weighted_percent), y=new_df3$upr), color = "red", linetype = "dashed", size = 2) + geom_line(aes(x=log10(new_df3$weighted_percent), y=new_df3$fit), color = "red", size = 2) + ylab("dist2root") + xlab('log10(Weighted Percent)') + theme(legend.position = "none")
 
-ggplot(Complete_META[Complete_META$cols == "blue",], aes(x=log10(weighted_percent), y=dist2root,color = cols)) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_line(color='red',data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit)) + geom_line(color='red', size = 2, data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit)) + geom_line(color='red', linetype = "dashed" , size = 2,data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit + 1.96 * os_pred.se.fit)) + geom_line(color='red', linetype = "dashed" , size = 2,data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit - 1.96 * os_pred.se.fit)) + theme_bw(base_size = 20)
+ggplot(Complete_META[Complete_META$cols == "blue",], aes(x=log10(weighted_percent), y=dist2root,color = as.character(SPORULATOR))) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_line(color='red',data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit)) + geom_line(color='red', size = 2, data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit)) + geom_line(color='red', linetype = "dashed" , size = 2,data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit + 1.96 * os_pred.se.fit)) + geom_line(color='red', linetype = "dashed" , size = 2,data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit - 1.96 * os_pred.se.fit)) + theme_bw(base_size = 20)
 
 ggplot(Complete_META[Complete_META$cols != "blue",], aes(x=log10(weighted_percent), y=dist2root,color = cols)) + geom_point(size=2) + theme_classic2(base_size = 20) + scale_color_manual(values=c("black", "grey", "blue")) + geom_line(color='red',data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit)) + geom_line(color='red', size = 2, data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit)) + geom_line(color='red', linetype = "dashed" , size = 2,data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit + 1.96 * os_pred.se.fit)) + geom_line(color='red', linetype = "dashed" , size = 2,data = predicted_df, aes(x=log_weighted_percent, y=os_pred.fit - 1.96 * os_pred.se.fit)) + theme_bw(base_size = 20)
+
 ```
